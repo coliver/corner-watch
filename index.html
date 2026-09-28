@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Corner Watch</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="tvFrame">
+  <div id="screen">
+    <canvas id="trail"></canvas>
+    <canvas id="fx"></canvas>
+    <div id="flash"></div>
+    <div id="cornerText"></div>
+    <div id="bouncer" class="text">DVD</div>
+    <div id="bgBadge" hidden></div>
+    <div id="crtOverlay" hidden></div>
+  </div>
+  <div id="tvStage" aria-hidden="true">
+    <div id="tvPhotoWrap">
+      <img id="tvPhoto" src="tv-cart.png" alt="">
+    </div>
+  </div>
+</div>
+<div id="controls">
+  <button id="settingsBtn" type="button" aria-expanded="false" aria-label="Settings">
+    <span class="bars" aria-hidden="true"></span>
+  </button>
+  <input id="fileInput" type="file" accept="image/*">
+  <div id="trailControls" hidden>
+    <div class="panelSection">
+      <div class="sectionLabel">Colors</div>
+      <div class="paletteRow">
+        <button type="button" id="paletteButton" aria-haspopup="listbox" aria-expanded="false" aria-label="Color palette">
+          <span class="swatchStrip" id="paletteButtonSwatch"></span>
+          <span id="paletteButtonLabel"></span>
+        </button>
+        <ul id="paletteList" class="paletteList" role="listbox" hidden></ul>
+      </div>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">Background</div>
+      <label class="trailRow"><span>Screen</span>
+        <select id="backgroundColor">
+          <option value="classic">Classic</option>
+          <option value="blue90s">90s Blue</option>
+        </select>
+      </label>
+      <label class="trailRow"><span>Badge</span>
+        <select id="backgroundBadge">
+          <option value="none">None</option>
+          <option value="video">VIDEO</option>
+          <option value="ch3">CH 3</option>
+          <option value="av1">AV 1</option>
+        </select>
+      </label>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">Photo</div>
+      <div id="photoRow">
+        <button id="pickBtn" type="button">Choose photo…</button>
+        <button id="clearBtn" type="button" hidden>Clear photo</button>
+      </div>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">Sound</div>
+      <label class="switchRow"><span>Sound enabled</span><input type="checkbox" id="soundEnabled"></label>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">Countdown</div>
+      <label class="switchRow"><span>Show countdown</span><input type="checkbox" id="countdownEnabled"></label>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">CRT effect</div>
+      <label class="switchRow"><span>Enabled</span><input type="checkbox" id="crtEnabled"></label>
+      <label class="trailRow"><span>Intensity</span>
+        <input type="range" id="crtIntensity" min="0" max="100" step="5">
+        <span class="trailVal" id="crtIntensityVal"></span>
+      </label>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">TV frame</div>
+      <label class="switchRow"><span>Enabled</span><input type="checkbox" id="frameEnabled"></label>
+    </div>
+    <div class="panelSection">
+      <div class="sectionLabel">Trail effect</div>
+      <label class="switchRow"><span>Enabled</span><input type="checkbox" id="trailEnabled"></label>
+      <label class="trailRow"><span>Style</span>
+        <select id="trailStyle">
+          <option value="dots">Dots</option>
+          <option value="comet">Comet</option>
+          <option value="line">Line</option>
+          <option value="rainbow">Rainbow</option>
+        </select>
+      </label>
+      <label class="trailRow"><span>Speed</span>
+        <input type="range" id="trailSpeed" min="1" max="40" step="1">
+        <span class="trailVal" id="trailSpeedVal"></span>
+      </label>
+      <label class="trailRow"><span>Size</span>
+        <input type="range" id="trailSize" min="50" max="200" step="10">
+        <span class="trailVal" id="trailSizeVal"></span>
+      </label>
+      <label class="trailRow"><span>Fade</span>
+        <input type="range" id="trailFade" min="5" max="120" step="5">
+        <span class="trailVal" id="trailFadeVal"></span>
+      </label>
+      <label class="trailRow"><span>Opacity</span>
+        <input type="range" id="trailOpacity" min="5" max="100" step="5">
+        <span class="trailVal" id="trailOpacityVal"></span>
+      </label>
+    </div>
+  </div>
+</div>
+<div id="countdown"><span id="countdownLabel"></span><span id="countdownTime" class="spoiler"></span></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

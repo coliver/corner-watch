@@ -1,0 +1,531 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+body.shake {
+  animation: shake 0.5s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-8px, -6px); }
+  20% { transform: translate(9px, 5px); }
+  30% { transform: translate(-7px, 7px); }
+  40% { transform: translate(8px, -8px); }
+  50% { transform: translate(-9px, 4px); }
+  60% { transform: translate(6px, -5px); }
+  70% { transform: translate(-5px, 6px); }
+  80% { transform: translate(5px, 5px); }
+  90% { transform: translate(-3px, -3px); }
+}
+/* "TV frame" view: the whole scene (#screen) renders at full logical size
+   as always, then gets visually perspective-warped (by app.js, via the
+   measured screenCorners) to sit inside the CRT's screen in a real photo
+   of a TV-on-a-cart. Off by default; #screen has no transform and the
+   photo is hidden, so nothing here changes normal behavior. */
+#tvStage {
+  display: none;
+}
+#tvFrame.framed #tvStage {
+  display: flex;
+}
+#tvStage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  pointer-events: none;
+}
+#tvPhotoWrap {
+  position: relative;
+  height: 92vh;
+  aspect-ratio: 1095 / 1436;
+}
+#tvPhoto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  transform-origin: 0 0;  
+}
+#trail {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+#bouncer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  will-change: transform;
+}
+#bouncer.text {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 128px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-shadow: 0 0 8px currentColor;
+  user-select: none;
+  white-space: nowrap;
+}
+#bouncer.photo .tint {
+  display: block;
+  max-width: 95vw;
+  max-height: 95vh;
+  background-color: var(--accent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  filter: drop-shadow(0 0 14px var(--accent));
+  pointer-events: none;
+}
+#fx {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+#flash {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+#flash.active {
+  animation: flashPulse 0.6s ease-out;
+}
+@keyframes flashPulse {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+#cornerText {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 8;
+  transform: translate(-50%, -50%) scale(0.3);
+  opacity: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 56px;
+  color: #fff;
+  text-shadow: 0 0 18px currentColor, 0 0 40px currentColor;
+  letter-spacing: 1px;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#cornerText.active {
+  animation: cornerPop 1.6s ease-out;
+}
+@keyframes cornerPop {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  25% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* CRT overlay: scanlines + vignette, opacity-scaled by --crt-intensity
+   (set by app.js from the slider). Sits above everything else so it reads
+   as a screen effect, not part of the scene. */
+#crtOverlay {
+  position: fixed;
+  inset: 0;
+  /* Below the HUD (#controls/#countdown are z-index 10) so the settings
+     menu reads clearly and doesn't get scanlines/vignette over it. */
+  z-index: 9;
+  pointer-events: none;
+  opacity: var(--crt-intensity, 0);
+  /* Scanline period is set in vh, not px, so line density looks the same
+     at 1080p and at 4K instead of turning into near-invisible hairlines or
+     shimmer on very tall viewports. */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.85) 0%,
+      rgba(0, 0, 0, 0.85) 50%,
+      transparent 50%,
+      transparent 100%
+    ),
+    radial-gradient(ellipse 80% 80% at center, transparent 55%, rgba(0, 0, 0, 0.97) 100%);
+  background-size: 100% 0.45vh, 100% 100%;
+  /* A curved-tube screen: rounding the overlay's own corners, then a huge
+     box-shadow spread fills in the rounded-off corners with solid black -
+     the classic "picture doesn't reach the corner" old-TV look - plus an
+     inset shadow for the softer bulge along the edges. */
+  border-radius: 2.5vmin / 5vmin;
+  box-shadow:
+    0 0 0 100vmax #000,
+    inset 0 0 8vmax 2vmax rgba(0, 0, 0, 0.8);
+}
+#crtOverlay[hidden] {
+  display: none;
+}
+
+/* Old TV/VCR-style on-screen badge (channel number, input label) in the
+   corner of a "no signal"-looking classic CRT idle screen. */
+#bgBadge {
+  position: fixed;
+  top: 3vh;
+  right: 4vw;
+  z-index: 2;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* Real 90s TV channel OSDs were never spec'd to an exact ratio (it was
+     manufacturer-specific), but the digits were consistently huge - on the
+     order of 1/10 to 1/8 of the screen height. Sized in vh, not px, so
+     that holds true on any display instead of looking tiny on a big one. */
+  font-size: 11vh;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #2ee62e;
+  text-shadow: 0 0 0.6vh rgba(46, 230, 46, 0.8), 0 0 1.6vh rgba(46, 230, 46, 0.5);
+  pointer-events: none;
+}
+#bgBadge[hidden] {
+  display: none;
+}
+
+/* --- HUD: an on-screen-display panel in the spirit of a CRT/arcade menu,
+   not a SaaS settings dropdown. Sharp corners throughout (deliberate, not
+   an oversight), monospace type, and its accent color is always whatever
+   color the bouncer currently is (var(--glow), set on <html> by setColor())
+   - so the panel reads as part of the show, not an independent brand.
+   --accent is defined once here and referenced everywhere below instead of
+   repeating the var(--glow, #ff3b30) fallback per rule. */
+:root {
+  --accent: var(--glow, #ff3b30);
+}
+#controls {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  opacity: 0.35;
+  transition: opacity 1s ease;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+#controls:hover, #controls:focus-within {
+  opacity: 1;
+}
+body.idle #controls {
+  opacity: 0;
+}
+
+#settingsBtn {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: rgba(12, 12, 15, 0.72);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  cursor: pointer;
+}
+#settingsBtn:hover {
+  background: rgba(12, 12, 15, 0.9);
+}
+#settingsBtn .bars {
+  display: block;
+  width: 14px;
+  height: 10px;
+  background: linear-gradient(
+    currentColor 0 2px, transparent 2px 4px,
+    currentColor 4px 6px, transparent 6px 8px,
+    currentColor 8px 10px
+  );
+}
+
+#trailControls {
+  margin-top: 6px;
+  width: 220px;
+  color: #e4e4e8;
+  background: rgba(12, 12, 15, 0.88);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 10px 12px;
+}
+#trailControls[hidden] {
+  display: none;
+}
+
+.panelSection {
+  padding: 8px 0;
+}
+.panelSection:first-child {
+  padding-top: 0;
+}
+.panelSection:last-child {
+  padding-bottom: 0;
+}
+.panelSection + .panelSection {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.sectionLabel {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: #8b8b93;
+  margin-bottom: 6px;
+}
+
+.paletteRow {
+  position: relative;
+}
+#paletteButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 12px;
+  color: #e4e4e8;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+#paletteButton:hover {
+  border-color: var(--accent);
+}
+.swatchStrip {
+  display: inline-block;
+  width: 44px;
+  height: 10px;
+  flex-shrink: 0;
+}
+#paletteButtonLabel {
+  flex: 1;
+  text-align: left;
+}
+.paletteList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: rgba(12, 12, 15, 0.96);
+  border: 1px solid var(--accent);
+}
+.paletteList[hidden] {
+  display: none;
+}
+.paletteList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.paletteList li:hover, .paletteList li[aria-selected="true"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#photoRow {
+  display: flex;
+  gap: 6px;
+}
+#pickBtn, #clearBtn {
+  font-family: inherit;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+#pickBtn:hover, #clearBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+#clearBtn[hidden] {
+  display: none;
+}
+#fileInput {
+  display: none;
+}
+
+/* label rows shared by the switch (checkbox) rows and the trail sliders */
+#trailControls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+#trailControls label + label {
+  margin-top: 6px;
+}
+.switchRow {
+  justify-content: space-between;
+}
+.trailRow > span:first-child {
+  width: 50px;
+  flex-shrink: 0;
+  color: #8b8b93;
+}
+
+/* checkbox/select/range all replace native browser chrome with the CRT/HUD
+   look below, so they share one appearance reset. */
+#trailControls input[type="checkbox"],
+#trailControls select,
+#trailControls input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* checkbox restyled as a small hardware-style toggle: a hollow square that
+   fills solid with the live accent color when on. */
+#trailControls input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  flex-shrink: 0;
+  border: 1px solid #8b8b93;
+  background: transparent;
+  cursor: pointer;
+}
+#trailControls input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+#trailControls select {
+  color-scheme: dark;
+  flex: 1;
+  font-family: inherit;
+  font-size: 12px;
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) center,
+    calc(100% - 8px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
+  padding: 3px 20px 3px 4px;
+}
+#trailControls select:hover {
+  border-color: var(--accent);
+}
+
+/* range sliders as a block gauge: a thin track filled up to the current
+   value in the live accent color, with a small square thumb. --fill is
+   kept in sync with each input's value by app.js. */
+#trailControls input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--fill, 50%),
+    rgba(255, 255, 255, 0.18) var(--fill, 50%) 100%
+  );
+}
+#trailControls input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 8px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 0;
+  cursor: pointer;
+}
+#trailControls input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: 14px;
+  border: none;
+  background: var(--accent);
+  border-radius: 0;
+  cursor: pointer;
+}
+#trailControls input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+#trailControls .trailVal {
+  width: 34px;
+  text-align: right;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+#controls :is(button, select, input):focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#countdown {
+  position: fixed;
+  left: 16px;
+  bottom: 14px;
+  z-index: 10;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  color: #e4e4e8;
+  padding: 4px 8px;
+  border-radius: 0;
+  background: rgba(12, 12, 15, 0.72);
+  border: 1px solid var(--accent);
+  opacity: 0.35;
+  transition: opacity 1s ease;
+  font-variant-numeric: tabular-nums;
+}
+body.idle #countdown {
+  opacity: 0;
+}
+#countdown[hidden] {
+  display: none;
+}
+#countdown .spoiler {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 4.5em;
+  text-align: center;
+  cursor: pointer;
+  color: transparent;
+  background: #8b8b93;
+}
+#countdown .spoiler:empty {
+  display: none;
+}
+#countdown .spoiler.revealed {
+  background: transparent;
+  color: var(--accent);
+}
+#countdown:hover {
+  opacity: 1;
+}
