@@ -440,6 +440,69 @@ describe('CRT settings', () => {
   });
 });
 
+describe('reset to defaults', () => {
+  it('restores every setting to its default, persists it, and reverts the photo', async () => {
+    localStorage.setItem('cornerWatchPalette', 'neon');
+    localStorage.setItem('cornerWatchBackground', JSON.stringify({ color: 'blue90s', badge: 'video' }));
+    localStorage.setItem('cornerWatchTrailConfig', JSON.stringify({
+      enabled: true, style: 'comet', speed: 10, sizePct: 150, fadeSeconds: 80, opacityPct: 90,
+    }));
+    localStorage.setItem('cornerWatchCountdownVisible', 'false');
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    localStorage.setItem('cornerWatchCrtConfig', JSON.stringify({ enabled: true, intensity: 90 }));
+    localStorage.setItem('cornerWatchFrame', 'true');
+    localStorage.setItem('cornerWatchPhoto', 'data:image/png;base64,AAA');
+
+    const app = await loadApp();
+    document.getElementById('resetDefaultsBtn').dispatchEvent(new window.Event('click'));
+
+    expect(document.getElementById('paletteButtonLabel').textContent).toBe('Classic');
+    expect(localStorage.getItem('cornerWatchPalette')).toBe('classic');
+
+    expect(app.backgroundConfig).toEqual({ color: 'classic', badge: 'none' });
+    expect(document.getElementById('backgroundColor').value).toBe('classic');
+    expect(document.getElementById('backgroundBadge').value).toBe('none');
+    expect(JSON.parse(localStorage.getItem('cornerWatchBackground'))).toEqual({ color: 'classic', badge: 'none' });
+
+    expect(app.trailConfig).toEqual({
+      enabled: false, style: 'dots', speed: 2, sizePct: 100, fadeSeconds: 45, opacityPct: 45,
+    });
+    expect(document.getElementById('trailEnabled').checked).toBe(false);
+    expect(app.trailPoints).toEqual([]);
+    expect(app.vx).toBe(2);
+
+    expect(document.getElementById('countdownEnabled').checked).toBe(true);
+    expect(document.getElementById('countdown').hidden).toBe(false);
+    expect(localStorage.getItem('cornerWatchCountdownVisible')).toBe('true');
+
+    expect(document.getElementById('soundEnabled').checked).toBe(false);
+    expect(localStorage.getItem('cornerWatchSoundEnabled')).toBe('false');
+
+    expect(app.crtConfig).toEqual({ enabled: false, intensity: 50 });
+    expect(document.getElementById('crtEnabled').checked).toBe(false);
+    expect(document.getElementById('crtOverlay').hidden).toBe(true);
+    expect(JSON.parse(localStorage.getItem('cornerWatchCrtConfig'))).toEqual({ enabled: false, intensity: 50 });
+
+    expect(document.getElementById('frameEnabled').checked).toBe(false);
+    expect(document.getElementById('tvFrame').classList.contains('framed')).toBe(false);
+    expect(localStorage.getItem('cornerWatchFrame')).toBe('false');
+
+    expect(document.getElementById('clearBtn').hidden).toBe(true);
+    expect(localStorage.getItem('cornerWatchPhoto')).toBeNull();
+  });
+
+  it('still resets the UI when persisting a default throws', async () => {
+    localStorage.clear();
+    await loadApp();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    expect(() => document.getElementById('resetDefaultsBtn').dispatchEvent(new window.Event('click'))).not.toThrow();
+    expect(document.getElementById('soundEnabled').checked).toBe(false);
+    expect(document.getElementById('countdownEnabled').checked).toBe(true);
+  });
+});
+
 describe('resizeCanvas', () => {
   it('sizes both canvases to the window and clears the trail', async () => {
     const app = await loadApp();

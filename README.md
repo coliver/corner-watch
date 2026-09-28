@@ -60,6 +60,9 @@ then visit `http://localhost:8934/`.
   after a few seconds of no mouse movement, and only fade back in once
   movement has continued for a beat (so a single stray jiggle doesn't flash
   them back on).
+- **Reset to defaults** — a button at the bottom of the ☰ settings menu
+  reverts every setting (palette, background, photo, sound, countdown, CRT,
+  TV frame, trail) to its default in one click.
 
 ## Notes
 

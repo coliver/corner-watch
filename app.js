@@ -41,6 +41,7 @@ const trailFadeInput = document.getElementById('trailFade');
 const trailFadeValue = document.getElementById('trailFadeVal');
 const trailOpacityInput = document.getElementById('trailOpacity');
 const trailOpacityValue = document.getElementById('trailOpacityVal');
+const resetDefaultsButton = document.getElementById('resetDefaultsBtn');
 
 // Premade palettes, ordered dark to bright.
 const PALETTES = {
@@ -601,6 +602,50 @@ document.addEventListener('paste', (event) => {
   }
 });
 
+function resetToDefaults() {
+  selectPalette(DEFAULT_PALETTE);
+  savePalette(paletteName);
+  setColor();
+
+  Object.assign(backgroundConfig, DEFAULT_BACKGROUND_CONFIG);
+  backgroundColorInput.value = backgroundConfig.color;
+  backgroundBadgeInput.value = backgroundConfig.badge;
+  applyBackgroundConfig();
+  saveBackgroundConfig();
+
+  Object.assign(trailConfig, DEFAULT_TRAIL_CONFIG);
+  trailPoints = [];
+  trailContext.clearRect(0, 0, trail.width, trail.height);
+  syncTrailUI();
+  applySpeed(trailConfig.speed);
+  saveTrailConfig();
+
+  countdownVisible = true;
+  countdownEnabledInput.checked = countdownVisible;
+  countdown.hidden = !countdownVisible;
+  try { localStorage.setItem('cornerWatchCountdownVisible', String(countdownVisible)); } catch {}
+
+  soundEnabled = false;
+  soundEnabledInput.checked = soundEnabled;
+  try { localStorage.setItem('cornerWatchSoundEnabled', String(soundEnabled)); } catch {}
+
+  Object.assign(crtConfig, DEFAULT_CRT_CONFIG);
+  crtEnabledInput.checked = crtConfig.enabled;
+  crtIntensityInput.value = crtConfig.intensity;
+  crtIntensityValue.textContent = crtConfig.intensity + '%';
+  updateRangeFill(crtIntensityInput);
+  applyCrtEffect();
+  saveCrtConfig();
+
+  frameEnabled = false;
+  frameEnabledInput.checked = frameEnabled;
+  applyFrameEffect();
+  saveFrameEnabled();
+
+  clearImage();
+}
+resetDefaultsButton.addEventListener('click', resetToDefaults);
+
 // --- corner celebration ---
 
 let particles = [];
@@ -981,6 +1026,7 @@ export {
   loadFrameEnabled,
   saveFrameEnabled,
   applyFrameEffect,
+  resetToDefaults,
   applySpeed,
   resizeCanvas,
   setColor,
