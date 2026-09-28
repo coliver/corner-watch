@@ -149,7 +149,12 @@ function saveBackgroundConfig() {
 }
 
 function applyBackgroundConfig() {
-  document.body.style.background = BACKGROUND_COLORS[backgroundConfig.color] || '';
+  const color = BACKGROUND_COLORS[backgroundConfig.color] || '';
+  document.body.style.background = color;
+  // #screen also needs its own background, not just the body's: in TV-frame
+  // mode #screen is warped to sit above #tvStage's own opaque backdrop, so
+  // the body color alone never shows through there.
+  screenElement.style.background = color;
   const text = BADGE_TEXT[backgroundConfig.badge];
   bgBadge.textContent = text || '';
   bgBadge.hidden = !text;
