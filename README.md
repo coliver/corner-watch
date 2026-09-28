@@ -15,6 +15,8 @@ around the screen, changes color on every wall hit, and celebrates with
 confetti, a flash, a screen shake, and a fanfare if it ever nails the exact
 corner.
 
+![Corner hit, TV-frame view](corner-hit-loop.gif)
+
 It's a static site: no build step, no runtime dependencies. `app.js` is
 loaded as an ES module, so it needs to be served over `http(s)://` rather
 than opened directly as a `file://` URL (browsers block module scripts from

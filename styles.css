@@ -238,6 +238,7 @@ body.shake {
 }
 body.idle #controls {
   opacity: 0;
+  pointer-events: none;
 }
 
 #settingsBtn {
@@ -518,6 +519,7 @@ body.idle #controls {
 }
 body.idle #countdown {
   opacity: 0;
+  pointer-events: none;
 }
 #countdown[hidden] {
   display: none;
