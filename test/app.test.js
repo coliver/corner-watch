@@ -593,7 +593,9 @@ describe('photo handling', () => {
 
   it('loadImageFile does nothing when there is no file', async () => {
     const app = await loadApp();
-    expect(() => app.loadImageFile(null)).not.toThrow();
+    const readSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL');
+    app.loadImageFile(null);
+    expect(readSpy).not.toHaveBeenCalled();
   });
 
   it('choosing a file reads it and stores it as the photo', async () => {
@@ -623,9 +625,11 @@ describe('photo handling', () => {
 
   it('a change event with no file selected is a no-op', async () => {
     await loadApp();
+    const readSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL');
     const fileInput = document.getElementById('fileInput');
     Object.defineProperty(fileInput, 'files', { value: [], configurable: true });
-    expect(() => fileInput.dispatchEvent(new window.Event('change'))).not.toThrow();
+    fileInput.dispatchEvent(new window.Event('change'));
+    expect(readSpy).not.toHaveBeenCalled();
   });
 
   it('pasting an image sets it as the photo and prevents the default paste', async () => {
@@ -651,7 +655,8 @@ describe('photo handling', () => {
   it('pasting with no clipboard data at all does nothing', async () => {
     await loadApp();
     const event = new window.Event('paste', { cancelable: true });
-    expect(() => document.dispatchEvent(event)).not.toThrow();
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
   });
 
   it('useImage shows a plain image, not a color tint, for a photo with no transparency', async () => {
@@ -671,41 +676,75 @@ describe('photo handling', () => {
   });
 });
 
+// Shared with the tick()/wall-hit tests below, so they can assert which
+// tone actually got requested instead of just "didn't throw".
+function installFakeAudioContext() {
+  class FakeParam {
+    setValueAtTime() {}
+    exponentialRampToValueAtTime() {}
+  }
+  class FakeNode {
+    connect() { return this; }
+  }
+  const createdOscillators = [];
+  class FakeAudioContext {
+    constructor() {
+      this.currentTime = 0;
+      this.destination = new FakeNode();
+    }
+    createOscillator() {
+      const osc = { type: '', frequency: { value: 0 }, connect: () => new FakeNode(), start() {}, stop() {} };
+      createdOscillators.push(osc);
+      return osc;
+    }
+    createGain() {
+      return { gain: new FakeParam(), connect: () => new FakeNode() };
+    }
+  }
+  FakeAudioContext.createdOscillators = createdOscillators;
+  global.AudioContext = FakeAudioContext;
+  window.AudioContext = FakeAudioContext;
+  return FakeAudioContext;
+}
+
 describe('audio', () => {
-  it('playBeep silently no-ops when there is no AudioContext', async () => {
+  // Sound defaults to disabled (loadSoundEnabled returns false when nothing
+  // is saved), so with no `cornerWatchSoundEnabled` key set these two hit
+  // playBeep/playFanfare's `if (!soundEnabled) return;` early return -
+  // they never reach the AudioContext line at all. (An earlier version of
+  // these two tests was titled "...when there is no AudioContext", which
+  // was never true: with sound disabled by default, no AudioContext was
+  // ever constructed to be absent - confirmed empirically by logging
+  // `soundEnabled`/`window.AudioContext` from inside the test.)
+  it('playBeep does nothing when sound is disabled', async () => {
+    localStorage.clear();
     const app = await loadApp();
     expect(() => app.playBeep(440)).not.toThrow();
   });
 
-  it('playFanfare silently no-ops when there is no AudioContext', async () => {
+  it('playFanfare does nothing when sound is disabled', async () => {
+    localStorage.clear();
     const app = await loadApp();
     expect(() => app.playFanfare()).not.toThrow();
   });
 
-  function installFakeAudioContext() {
-    class FakeParam {
-      setValueAtTime() {}
-      exponentialRampToValueAtTime() {}
-    }
-    class FakeNode {
-      connect() { return this; }
-    }
-    class FakeAudioContext {
-      constructor() {
-        this.currentTime = 0;
-        this.destination = new FakeNode();
-      }
-      createOscillator() {
-        return { type: '', frequency: { value: 0 }, connect: () => new FakeNode(), start() {}, stop() {} };
-      }
-      createGain() {
-        return { gain: new FakeParam(), connect: () => new FakeNode() };
-      }
-    }
-    global.AudioContext = FakeAudioContext;
-    window.AudioContext = FakeAudioContext;
-    return FakeAudioContext;
-  }
+  it('playBeep swallows the error when sound is enabled but no AudioContext constructor exists', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    const app = await loadApp();
+    // afterEach (top of file) deletes window/global.AudioContext, and this
+    // test never installs a fake one or a webkitAudioContext, so
+    // `window.AudioContext || window.webkitAudioContext` is undefined and
+    // `new undefined()` throws - this is the actual "no AudioContext" path.
+    expect(() => app.playBeep(440)).not.toThrow();
+    localStorage.clear();
+  });
+
+  it('playFanfare swallows the error when sound is enabled but no AudioContext constructor exists', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    const app = await loadApp();
+    expect(() => app.playFanfare()).not.toThrow();
+    localStorage.clear();
+  });
 
   it('playBeep synthesizes a tone when AudioContext is available', async () => {
     localStorage.setItem('cornerWatchSoundEnabled', 'true');
@@ -832,14 +871,12 @@ describe('updateStatus', () => {
 
   it('reports impossible when the two axes can never land on a corner together', async () => {
     const app = await loadApp();
-    // maxX=1 with vx=2 makes Px=1 (always lands on the boundary every
-    // frame), same for Y with a modulus that can't reconcile with a
-    // deliberately incompatible pair below via maxX/maxY/vx/vy chosen so
-    // solveCRT's gcd check fails.
-    app.updateStatus(0, 0, 4, 4, 2, 3);
-    const label = document.getElementById('countdownLabel').textContent;
-    expect(['No corner possible in this run', '']).not.toContain(undefined); // sanity
-    expect(typeof label).toBe('string');
+    // Px=4, Py=6 (gcd 2); the X and Y phase offsets (a1=0, a2=1) differ by
+    // an odd number, which the gcd=2 modulus can never bridge, so no frame
+    // exists where both axes hit a boundary at once - solveCRT returns null.
+    app.updateStatus(0, 5, 1, 1, 4, 6);
+    expect(document.getElementById('countdownLabel').textContent).toBe('No corner possible in this run');
+    expect(document.getElementById('countdownTime').textContent).toBe('');
   });
 
   it('reports a countdown when a corner is reachable, throttled to one render per interval', async () => {
@@ -904,18 +941,28 @@ describe('tick', () => {
     expect(app.vy).toBe(-5);
   });
 
-  it('hits only the X wall (paddle beep path)', async () => {
+  it('hits only the X wall and beeps the paddle tone (226Hz)', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
     const app = await loadApp();
+    const FakeAudioContext = installFakeAudioContext();
     setViewport(200, 1000);
     app.__setStateForTest({ x: 0, y: 500, vx: -5, vy: 5 });
-    expect(() => app.tick(16)).not.toThrow();
+    app.tick(16);
+    expect(FakeAudioContext.createdOscillators).toHaveLength(1);
+    expect(FakeAudioContext.createdOscillators[0].frequency.value).toBe(226);
+    localStorage.clear();
   });
 
-  it('hits only the Y wall (wall beep path)', async () => {
+  it('hits only the Y wall and beeps the wall tone (459Hz)', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
     const app = await loadApp();
+    const FakeAudioContext = installFakeAudioContext();
     setViewport(1000, 200);
     app.__setStateForTest({ x: 500, y: 0, vx: 5, vy: -5 });
-    expect(() => app.tick(16)).not.toThrow();
+    app.tick(16);
+    expect(FakeAudioContext.createdOscillators).toHaveLength(1);
+    expect(FakeAudioContext.createdOscillators[0].frequency.value).toBe(459);
+    localStorage.clear();
   });
 
   it('celebrates a corner at (0,0) and at (max,max)', async () => {
@@ -932,24 +979,49 @@ describe('tick', () => {
     expect(document.getElementById('flash').classList.contains('active')).toBe(true);
   });
 
-  it('tracks elapsed time across frames, including a stalled or huge gap', async () => {
+  // deltaMs itself isn't exported, but its effect is observable through
+  // trail-point aging: updateTrail does `p.age += deltaMs` on every call, and
+  // trailPoints (with their .age) is exported live. vx/vy stay small and the
+  // viewport is large, so the bouncer never nears a wall across these five
+  // ticks - no bounce/color/status side effects to account for, just the
+  // deltaMs fallback math. trailFrameCounter (module-private, starts at 0)
+  // only samples a new point on even counts, so of these five updateTrail
+  // calls only the 2nd and 4th (tick(16) and tick(1032)) push a point;
+  // the other three just age whichever points already exist.
+  it('tracks elapsed time across frames, falling back to a synthetic delta on a stalled or huge gap', async () => {
     const app = await loadApp();
     setViewport(1000, 1000);
-    app.__setStateForTest({ x: 50, y: 50, vx: 1, vy: 1 });
-    app.tick(0); // first frame: lastTickTime was null
-    app.tick(16); // normal small gap
-    app.tick(16); // zero gap (rawDeltaMs <= 0)
-    app.tick(5000); // huge gap (rawDeltaMs >= 1000)
-    expect(() => app.tick(5016)).not.toThrow();
+    app.__setStateForTest({ x: 500, y: 500, vx: 1, vy: 1 });
+    app.trailConfig.enabled = true;
+    app.trailConfig.fadeSeconds = 10; // long enough that nothing here gets culled
+
+    app.tick(0); // first frame: lastTickTime was null, no rawDeltaMs to use at all
+    expect(app.trailPoints).toEqual([]);
+
+    app.tick(16); // normal small gap: rawDeltaMs = 16, used as-is
+    expect(app.trailPoints).toHaveLength(1);
+    expect(app.trailPoints[0].age).toBe(16);
+
+    app.tick(16); // zero gap: rawDeltaMs = 0, must fall back to ~16.67ms, not 0
+    expect(app.trailPoints).toHaveLength(1); // odd counter: no new sample this frame
+    expect(app.trailPoints[0].age).toBeCloseTo(16 + 1000 / 60, 10);
+
+    app.tick(1032); // huge gap: rawDeltaMs = 1000ms, not < 1000, so must fall back
+    // to ~16.67ms rather than aging everything by a full second
+    expect(app.trailPoints).toHaveLength(2);
+    expect(app.trailPoints[0].age).toBeCloseTo(16 + 2 * (1000 / 60), 10);
+    expect(app.trailPoints[1].age).toBeCloseTo(1000 / 60, 10);
+
+    expect(() => app.tick(5016)).not.toThrow(); // ordinary gap again after the stall
   });
 
   it('recomputes the measured fps once the sampling window elapses', async () => {
     const app = await loadApp();
     setViewport(1000, 1000);
     app.__setStateForTest({ x: 50, y: 50, vx: 1, vy: 1 });
-    app.tick(0);
-    app.tick(2500); // past the 2000ms window
-    expect(app.measuredFps).toBeGreaterThan(0);
+    app.tick(0); // opens the sampling window at t=0
+    app.tick(2500); // 1 frame counted over a 2.5s window: 1 / 2.5 = 0.4fps
+    expect(app.measuredFps).toBe(0.4);
   });
 
   it('schedules the next frame via requestAnimationFrame', async () => {
@@ -962,9 +1034,23 @@ describe('tick', () => {
 
 describe('window resize handler', () => {
   it('clamps the bouncer position back on screen', async () => {
-    await loadApp();
+    const app = await loadApp();
+    setViewport(1000, 1000);
+    app.__setStateForTest({ x: 900, y: 900 });
     setViewport(300, 300);
-    expect(() => window.dispatchEvent(new window.Event('resize'))).not.toThrow();
+    window.dispatchEvent(new window.Event('resize'));
+    expect(app.x).toBe(300);
+    expect(app.y).toBe(300);
+  });
+
+  it('leaves the position alone when it still fits after the resize', async () => {
+    const app = await loadApp();
+    setViewport(1000, 1000);
+    app.__setStateForTest({ x: 50, y: 50 });
+    setViewport(300, 300);
+    window.dispatchEvent(new window.Event('resize'));
+    expect(app.x).toBe(50);
+    expect(app.y).toBe(50);
   });
 });
 
@@ -1014,10 +1100,15 @@ describe('HUD idle fade', () => {
     expect(document.body.classList.contains('idle')).toBe(false);
   });
 
-  it('armHudIdleTimer and onHudMouseMove can be called directly', async () => {
+  it('armHudIdleTimer and onHudMouseMove can be called directly and drive the same idle/wake behavior as the bound listeners', async () => {
     const app = await loadApp();
-    expect(() => app.armHudIdleTimer()).not.toThrow();
-    expect(() => app.onHudMouseMove()).not.toThrow();
+    app.armHudIdleTimer();
+    vi.advanceTimersByTime(app.HUD_IDLE_MS);
+    expect(document.body.classList.contains('idle')).toBe(true);
+
+    app.onHudMouseMove();
+    vi.advanceTimersByTime(app.HUD_WAKE_MS);
+    expect(document.body.classList.contains('idle')).toBe(false);
   });
 });
 
