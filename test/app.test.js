@@ -265,6 +265,181 @@ describe('trail settings inputs', () => {
   });
 });
 
+describe('palette settings', () => {
+  it('loads a previously saved valid palette from localStorage', async () => {
+    localStorage.setItem('cornerWatchPalette', 'vivid');
+    const app = await loadApp();
+    expect(app.loadPalette()).toBe('vivid');
+    expect(document.getElementById('paletteButtonLabel').textContent).toBe('Vivid');
+    localStorage.clear();
+  });
+
+  it('paletteButton click toggles the list open and aria-expanded', async () => {
+    localStorage.clear();
+    await loadApp();
+    const button = document.getElementById('paletteButton');
+    const list = document.getElementById('paletteList');
+    button.dispatchEvent(new window.Event('click'));
+    expect(list.hidden).toBe(false);
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    button.dispatchEvent(new window.Event('click'));
+    expect(list.hidden).toBe(true);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('clicking a palette option selects it, saves it, and closes the list', async () => {
+    localStorage.clear();
+    await loadApp();
+    const list = document.getElementById('paletteList');
+    const option = list.querySelector('[data-palette="neon"]');
+    option.dispatchEvent(new window.Event('click', { bubbles: true }));
+    expect(document.getElementById('paletteButtonLabel').textContent).toBe('Neon');
+    expect(option.getAttribute('aria-selected')).toBe('true');
+    expect(list.hidden).toBe(true);
+    expect(localStorage.getItem('cornerWatchPalette')).toBe('neon');
+  });
+
+  it('clicking the list without hitting an option does nothing', async () => {
+    localStorage.clear();
+    await loadApp();
+    const list = document.getElementById('paletteList');
+    const labelBefore = document.getElementById('paletteButtonLabel').textContent;
+    list.dispatchEvent(new window.Event('click', { bubbles: true }));
+    expect(document.getElementById('paletteButtonLabel').textContent).toBe(labelBefore);
+  });
+
+  it('selecting a palette still applies it when saving the preference throws', async () => {
+    localStorage.clear();
+    await loadApp();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    const list = document.getElementById('paletteList');
+    const option = list.querySelector('[data-palette="neon"]');
+    expect(() => option.dispatchEvent(new window.Event('click', { bubbles: true }))).not.toThrow();
+    expect(document.getElementById('paletteButtonLabel').textContent).toBe('Neon');
+  });
+});
+
+describe('background settings', () => {
+  it('loads a previously saved background config from localStorage', async () => {
+    localStorage.setItem('cornerWatchBackground', JSON.stringify({ color: 'blue90s', badge: 'ch3' }));
+    const app = await loadApp();
+    expect(app.backgroundConfig.color).toBe('blue90s');
+    expect(document.getElementById('bgBadge').textContent).toBe('CH 3');
+    localStorage.clear();
+  });
+
+  it('changing the background color updates the screen and persists', async () => {
+    localStorage.clear();
+    const app = await loadApp();
+    const select = document.getElementById('backgroundColor');
+    select.value = 'blue90s';
+    select.dispatchEvent(new window.Event('change'));
+    expect(app.backgroundConfig.color).toBe('blue90s');
+    expect(JSON.parse(localStorage.getItem('cornerWatchBackground')).color).toBe('blue90s');
+  });
+
+  it('changing the badge updates the badge text and persists', async () => {
+    localStorage.clear();
+    const app = await loadApp();
+    const select = document.getElementById('backgroundBadge');
+    select.value = 'video';
+    select.dispatchEvent(new window.Event('change'));
+    expect(app.backgroundConfig.badge).toBe('video');
+    expect(document.getElementById('bgBadge').textContent).toBe('VIDEO');
+    expect(document.getElementById('bgBadge').hidden).toBe(false);
+    expect(JSON.parse(localStorage.getItem('cornerWatchBackground')).badge).toBe('video');
+  });
+
+  it('still applies the background when saving the preference throws', async () => {
+    localStorage.clear();
+    const app = await loadApp();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    const select = document.getElementById('backgroundColor');
+    select.value = 'blue90s';
+    expect(() => select.dispatchEvent(new window.Event('change'))).not.toThrow();
+    expect(app.backgroundConfig.color).toBe('blue90s');
+  });
+});
+
+describe('sound settings', () => {
+  it('loads a previously saved sound-enabled state from localStorage', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    await loadApp();
+    expect(document.getElementById('soundEnabled').checked).toBe(true);
+    localStorage.clear();
+  });
+
+  it('toggling sound updates state and persists', async () => {
+    localStorage.clear();
+    await loadApp();
+    const toggle = document.getElementById('soundEnabled');
+    toggle.checked = true;
+    toggle.dispatchEvent(new window.Event('change'));
+    expect(localStorage.getItem('cornerWatchSoundEnabled')).toBe('true');
+  });
+
+  it('the sound toggle still updates when saving the preference throws', async () => {
+    localStorage.clear();
+    await loadApp();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    const toggle = document.getElementById('soundEnabled');
+    toggle.checked = true;
+    expect(() => toggle.dispatchEvent(new window.Event('change'))).not.toThrow();
+  });
+});
+
+describe('CRT settings', () => {
+  it('loads a previously saved CRT config from localStorage', async () => {
+    localStorage.setItem('cornerWatchCrtConfig', JSON.stringify({ enabled: true, intensity: 80 }));
+    const app = await loadApp();
+    expect(app.crtConfig.enabled).toBe(true);
+    expect(app.crtConfig.intensity).toBe(80);
+    expect(document.getElementById('crtOverlay').hidden).toBe(false);
+    localStorage.clear();
+  });
+
+  it('toggling CRT enabled applies the overlay and persists', async () => {
+    localStorage.clear();
+    const app = await loadApp();
+    const toggle = document.getElementById('crtEnabled');
+    toggle.checked = true;
+    toggle.dispatchEvent(new window.Event('change'));
+    expect(app.crtConfig.enabled).toBe(true);
+    expect(document.getElementById('crtOverlay').hidden).toBe(false);
+    expect(JSON.parse(localStorage.getItem('cornerWatchCrtConfig')).enabled).toBe(true);
+  });
+
+  it('changing CRT intensity updates the label, persists, and re-syncs the slider fill', async () => {
+    localStorage.clear();
+    const app = await loadApp();
+    const input = document.getElementById('crtIntensity');
+    input.value = '75';
+    input.dispatchEvent(new window.Event('input', { bubbles: true }));
+    expect(app.crtConfig.intensity).toBe(75);
+    expect(document.getElementById('crtIntensityVal').textContent).toBe('75%');
+    expect(JSON.parse(localStorage.getItem('cornerWatchCrtConfig')).intensity).toBe(75);
+    expect(input.style.getPropertyValue('--fill')).toBe('75%');
+  });
+
+  it('still applies CRT changes when saving the preference throws', async () => {
+    localStorage.clear();
+    const app = await loadApp();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    const toggle = document.getElementById('crtEnabled');
+    toggle.checked = true;
+    expect(() => toggle.dispatchEvent(new window.Event('change'))).not.toThrow();
+    expect(app.crtConfig.enabled).toBe(true);
+  });
+});
+
 describe('resizeCanvas', () => {
   it('sizes both canvases to the window and clears the trail', async () => {
     const app = await loadApp();
@@ -466,18 +641,73 @@ describe('audio', () => {
     }
     global.AudioContext = FakeAudioContext;
     window.AudioContext = FakeAudioContext;
+    return FakeAudioContext;
   }
 
   it('playBeep synthesizes a tone when AudioContext is available', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
     const app = await loadApp();
     installFakeAudioContext();
     expect(() => app.playBeep(440)).not.toThrow();
+    localStorage.clear();
   });
 
   it('playFanfare plays all four notes when AudioContext is available', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
     const app = await loadApp();
     installFakeAudioContext();
     expect(() => app.playFanfare()).not.toThrow();
+    localStorage.clear();
+  });
+
+  function installThrowingAudioContext() {
+    class ThrowingAudioContext {
+      constructor() {
+        throw new Error('no audio hardware');
+      }
+    }
+    global.AudioContext = ThrowingAudioContext;
+    window.AudioContext = ThrowingAudioContext;
+  }
+
+  it('playBeep swallows errors from audio synthesis', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    const app = await loadApp();
+    installThrowingAudioContext();
+    expect(() => app.playBeep(440)).not.toThrow();
+    localStorage.clear();
+  });
+
+  it('playFanfare swallows errors from audio synthesis', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    const app = await loadApp();
+    installThrowingAudioContext();
+    expect(() => app.playFanfare()).not.toThrow();
+    localStorage.clear();
+  });
+
+  it('playBeep falls back to webkitAudioContext when AudioContext is unavailable', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    const app = await loadApp();
+    const FakeAudioContext = installFakeAudioContext();
+    delete window.AudioContext;
+    delete global.AudioContext;
+    window.webkitAudioContext = FakeAudioContext;
+    expect(() => app.playBeep(440)).not.toThrow();
+    delete window.webkitAudioContext;
+    localStorage.clear();
+  });
+
+  it('playFanfare falls back to webkitAudioContext when AudioContext is unavailable', async () => {
+    localStorage.setItem('cornerWatchSoundEnabled', 'true');
+    const app = await loadApp();
+    const FakeAudioContext = installFakeAudioContext();
+    delete window.AudioContext;
+    delete global.AudioContext;
+    window.webkitAudioContext = FakeAudioContext;
+    expect(() => app.playFanfare()).not.toThrow();
+    delete window.webkitAudioContext;
+    localStorage.clear();
   });
 });
 
@@ -755,6 +985,17 @@ describe('TV frame', () => {
     toggle.checked = true;
     toggle.dispatchEvent(new window.Event('change'));
     expect(() => window.dispatchEvent(new window.Event('resize'))).not.toThrow();
+    expect(document.getElementById('screen').style.transform).toMatch(/^matrix3d\(/);
+  });
+
+  it('still applies the frame when saving the preference throws', async () => {
+    await loadApp();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    const toggle = document.getElementById('frameEnabled');
+    toggle.checked = true;
+    expect(() => toggle.dispatchEvent(new window.Event('change'))).not.toThrow();
     expect(document.getElementById('screen').style.transform).toMatch(/^matrix3d\(/);
   });
 });
