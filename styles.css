@@ -71,6 +71,13 @@ body.shake {
   z-index: 5;
   will-change: transform;
 }
+#bouncer.hit {
+  animation: wallHitPulse 0.18s ease-out;
+}
+@keyframes wallHitPulse {
+  0% { filter: brightness(2.4); }
+  100% { filter: brightness(1); }
+}
 #bouncer.text {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 900;

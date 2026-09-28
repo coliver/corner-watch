@@ -936,7 +936,12 @@ function tick(now) {
   if (y <= 0) { y = 0; vy = -vy; hitY = true; }
   else if (y >= maxY) { y = maxY; vy = -vy; hitY = true; }
 
-  if (hitX || hitY) setColor();
+  if (hitX || hitY) {
+    setColor();
+    bouncer.classList.remove('hit');
+    void bouncer.offsetWidth;
+    bouncer.classList.add('hit');
+  }
 
   if (hitX && hitY) {
     const cornerX = (x <= 0) ? 0 : window.innerWidth;

@@ -917,6 +917,7 @@ describe('tick', () => {
     app.tick(0);
     expect(app.x).toBe(55);
     expect(app.y).toBe(55);
+    expect(document.getElementById('bouncer').classList.contains('hit')).toBe(false);
   });
 
   it('bounces off the left/top walls', async () => {
@@ -928,6 +929,7 @@ describe('tick', () => {
     expect(app.y).toBe(0);
     expect(app.vx).toBe(5);
     expect(app.vy).toBe(5);
+    expect(document.getElementById('bouncer').classList.contains('hit')).toBe(true);
   });
 
   it('bounces off the right/bottom walls', async () => {
