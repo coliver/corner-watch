@@ -513,20 +513,46 @@ setColor();
 const PHOTO_SCALE = 2;
 const DEFAULT_IMAGE = 'image.png';
 
+// The color-cycling tint effect only makes sense on an image with real
+// alpha transparency (mask-image through an opaque photo just paints a
+// solid rectangle). Detected by sampling the decoded image's own pixels,
+// since neither the file's MIME type nor its extension guarantee anything
+// about its actual alpha channel.
+function hasTransparency(image) {
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d');
+  context.drawImage(image, 0, 0);
+  const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+  for (let index = 3; index < data.length; index += 4) {
+    if (data[index] < 255) return true;
+  }
+  return false;
+}
+
 function useImage(dataUrl) {
   bouncer.className = 'photo';
   bouncer.innerHTML = '';
-  const tint = document.createElement('div');
-  tint.className = 'tint';
-  tint.style.webkitMaskImage = `url(${dataUrl})`;
-  tint.style.maskImage = `url(${dataUrl})`;
   const probe = new Image();
   probe.addEventListener('load', () => {
-    tint.style.width = (probe.naturalWidth * PHOTO_SCALE) + 'px';
-    tint.style.height = (probe.naturalHeight * PHOTO_SCALE) + 'px';
+    const width = (probe.naturalWidth * PHOTO_SCALE) + 'px';
+    const height = (probe.naturalHeight * PHOTO_SCALE) + 'px';
+    const element = hasTransparency(probe) ? document.createElement('div') : document.createElement('img');
+    if (element instanceof HTMLImageElement) {
+      element.className = 'plainPhoto';
+      element.src = dataUrl;
+    } else {
+      element.className = 'tint';
+      element.style.webkitMaskImage = `url(${dataUrl})`;
+      element.style.maskImage = `url(${dataUrl})`;
+    }
+    element.style.width = width;
+    element.style.height = height;
+    bouncer.innerHTML = '';
+    bouncer.append(element);
   });
   probe.src = dataUrl;
-  bouncer.append(tint);
   clearButton.hidden = false;
 }
 

@@ -96,6 +96,14 @@ body.shake {
   filter: drop-shadow(0 0 14px var(--accent));
   pointer-events: none;
 }
+#bouncer.photo .plainPhoto {
+  display: block;
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px var(--accent));
+  pointer-events: none;
+}
 #fx {
   position: fixed;
   inset: 0;

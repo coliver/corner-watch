@@ -415,6 +415,22 @@ describe('photo handling', () => {
     const event = new window.Event('paste', { cancelable: true });
     expect(() => document.dispatchEvent(event)).not.toThrow();
   });
+
+  it('useImage shows a plain image, not a color tint, for a photo with no transparency', async () => {
+    const app = await loadApp();
+    vi.spyOn(window.HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage() {},
+      getImageData: () => ({ data: new Uint8ClampedArray([0, 0, 0, 255]) }),
+    });
+    app.useImage('opaque-photo.png');
+    await vi.waitFor(() => {
+      const img = document.querySelector('#bouncer .plainPhoto');
+      expect(img).not.toBeNull();
+      expect(img.src).toContain('opaque-photo.png');
+      expect(img.style.width).toBe('80px');
+    });
+    expect(document.querySelector('#bouncer .tint')).toBeNull();
+  });
 });
 
 describe('audio', () => {
@@ -709,5 +725,36 @@ describe('HUD idle fade', () => {
     const app = await loadApp();
     expect(() => app.armHudIdleTimer()).not.toThrow();
     expect(() => app.onHudMouseMove()).not.toThrow();
+  });
+});
+
+describe('TV frame', () => {
+  it('enabling frame mode warps #screen with a perspective transform', async () => {
+    await loadApp();
+    const toggle = document.getElementById('frameEnabled');
+    toggle.checked = true;
+    toggle.dispatchEvent(new window.Event('change'));
+    expect(document.getElementById('screen').style.transform).toMatch(/^matrix3d\(/);
+    expect(document.getElementById('tvFrame').classList.contains('framed')).toBe(true);
+  });
+
+  it('disabling frame mode clears the transform', async () => {
+    await loadApp();
+    const toggle = document.getElementById('frameEnabled');
+    toggle.checked = true;
+    toggle.dispatchEvent(new window.Event('change'));
+    toggle.checked = false;
+    toggle.dispatchEvent(new window.Event('change'));
+    expect(document.getElementById('screen').style.transform).toBe('');
+    expect(document.getElementById('tvFrame').classList.contains('framed')).toBe(false);
+  });
+
+  it('a window resize re-applies the transform while frame mode is on', async () => {
+    await loadApp();
+    const toggle = document.getElementById('frameEnabled');
+    toggle.checked = true;
+    toggle.dispatchEvent(new window.Event('change'));
+    expect(() => window.dispatchEvent(new window.Event('resize'))).not.toThrow();
+    expect(document.getElementById('screen').style.transform).toMatch(/^matrix3d\(/);
   });
 });

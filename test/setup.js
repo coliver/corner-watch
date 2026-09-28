@@ -34,6 +34,12 @@ function makeStubContext() {
     moveTo() {},
     lineTo() {},
     stroke() {},
+    drawImage() {},
+    // Defaults to reporting "has transparency" (alpha 0), matching the
+    // real default photo (image.png, a transparent-background silhouette),
+    // so most tests don't need to think about this. Tests exercising the
+    // opaque-photo path override getContext for that one case.
+    getImageData: () => ({ data: new Uint8ClampedArray(4) }),
   };
 }
 window.HTMLCanvasElement.prototype.getContext = () => makeStubContext();
