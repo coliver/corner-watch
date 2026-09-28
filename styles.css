@@ -213,6 +213,17 @@ body.shake {
 #bgBadge[hidden] {
   display: none;
 }
+/* The classic green phosphor glow reads as noise against the 90s "no
+   signal" blue, which real tuner OSDs rendered in a plain light-grey
+   instead - so swap to that grey on that background specifically. Keep
+   a (colorless) soft glow rather than dropping the shadow entirely: in
+   TV-frame mode this badge gets shrunk a lot by the perspective warp,
+   and hard-edged, shadow-less text falls apart into illegible fragments
+   at that scale - the blur is load-bearing, not just decorative. */
+body[data-bg-color="blue90s"] #bgBadge {
+  color: #e8e8e8;
+  text-shadow: 0 0 0.6vh rgba(232, 232, 232, 0.8), 0 0 1.6vh rgba(232, 232, 232, 0.5);
+}
 
 /* --- HUD: an on-screen-display panel in the spirit of a CRT/arcade menu,
    not a SaaS settings dropdown. Sharp corners throughout (deliberate, not

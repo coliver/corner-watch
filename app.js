@@ -152,6 +152,7 @@ function saveBackgroundConfig() {
 function applyBackgroundConfig() {
   const color = BACKGROUND_COLORS[backgroundConfig.color] || '';
   document.body.style.background = color;
+  document.body.dataset.bgColor = backgroundConfig.color;
   // #screen also needs its own background, not just the body's: in TV-frame
   // mode #screen is warped to sit above #tvStage's own opaque backdrop, so
   // the body color alone never shows through there.
@@ -409,9 +410,6 @@ function applyFrameEffect() {
     applyBackgroundConfig();
     return;
   }
-  // The framed photo already shows its own on-screen picture, so the
-  // app's own badge would just duplicate it.
-  bgBadge.hidden = true;
   const containerRect = tvPhotoWrap.getBoundingClientRect();
   const toPx = (pt) => [
     containerRect.left + (pt.x / 100) * containerRect.width,
