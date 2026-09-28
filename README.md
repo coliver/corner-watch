@@ -1,5 +1,15 @@
 # Corner Watch
 
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://coliver.github.io/corner-watch/)
+[![Pages deploy](https://github.com/coliver/corner-watch/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/coliver/corner-watch/actions/workflows/pages/pages-build-deployment)
+![Top language](https://img.shields.io/github/languages/top/coliver/corner-watch)
+![Last commit](https://img.shields.io/github/last-commit/coliver/corner-watch)
+![Repo size](https://img.shields.io/github/repo-size/coliver/corner-watch)
+![Dependencies](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
+![Build step](https://img.shields.io/badge/build%20step-none-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![Stars](https://img.shields.io/github/stars/coliver/corner-watch?style=social)
+
 A DVD-logo screensaver for the browser. A logo (or your own photo) bounces
 around the screen, changes color on every wall hit, and celebrates with
 confetti, a flash, a screen shake, and a fanfare if it ever nails the exact
