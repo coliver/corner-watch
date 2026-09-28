@@ -45,3 +45,11 @@ test in `test/app.test.js`, not just a passing suite.
   scale/translate. The warp is purely cosmetic: bounce physics and corner-hit
   detection always run in the untransformed `window.innerWidth`/`innerHeight`
   space, so this transform can't affect corner-hit odds.
+- `#crtOverlay` (scanlines/vignette) is deliberately a sibling of `#screen`,
+  not a child of it: a `position: fixed` descendant of a transformed element
+  is positioned/painted relative to that element instead of the real
+  viewport, so nesting it inside `#screen` would drag its effect through
+  the same perspective warp and crush it into moiré. In TV-frame mode,
+  `applyFrameEffect()` instead clips it with `clip-path: polygon(...)` to
+  the same four measured screen corners used for `#screen`'s homography, so
+  the effect stays crisp but still reads as confined to the in-photo tube.

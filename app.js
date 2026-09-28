@@ -407,6 +407,7 @@ function applyFrameEffect() {
   tvFrame.classList.toggle('framed', frameEnabled);
   if (!frameEnabled) {
     screenElement.style.transform = '';
+    crtOverlay.style.clipPath = '';
     applyBackgroundConfig();
     return;
   }
@@ -415,14 +416,20 @@ function applyFrameEffect() {
     containerRect.left + (pt.x / 100) * containerRect.width,
     containerRect.top + (pt.y / 100) * containerRect.height,
   ];
+  const [nw, ne, sw, se] = [
+    toPx(screenCorners.nw), toPx(screenCorners.ne), toPx(screenCorners.sw), toPx(screenCorners.se),
+  ];
   const W = window.innerWidth;
   const H = window.innerHeight;
-  const h = solveHomography(
-    [[0, 0], [W, 0], [0, H], [W, H]],
-    [toPx(screenCorners.nw), toPx(screenCorners.ne), toPx(screenCorners.sw), toPx(screenCorners.se)]
-  );
+  const h = solveHomography([[0, 0], [W, 0], [0, H], [W, H]], [nw, ne, sw, se]);
   screenElement.style.transform =
     `matrix3d(${h[0]}, ${h[3]}, 0, ${h[6]}, ${h[1]}, ${h[4]}, 0, ${h[7]}, 0, 0, 1, 0, ${h[2]}, ${h[5]}, 0, 1)`;
+  // crtOverlay lives outside #screen (unwarped, so its scanlines stay crisp
+  // instead of getting crushed by the same perspective transform - see the
+  // comment on #crtOverlay in styles.css), so without a mask its vignette
+  // would darken the whole photo instead of just the in-photo screen. Clip
+  // it to the same four corners so the effect reads as coming from the tube.
+  crtOverlay.style.clipPath = `polygon(${nw[0]}px ${nw[1]}px, ${ne[0]}px ${ne[1]}px, ${se[0]}px ${se[1]}px, ${sw[0]}px ${sw[1]}px)`;
 }
 
 let frameEnabled = loadFrameEnabled();

@@ -1022,16 +1022,17 @@ describe('HUD idle fade', () => {
 });
 
 describe('TV frame', () => {
-  it('enabling frame mode warps #screen with a perspective transform', async () => {
+  it('enabling frame mode warps #screen with a perspective transform and masks the CRT overlay to the screen cutout', async () => {
     await loadApp();
     const toggle = document.getElementById('frameEnabled');
     toggle.checked = true;
     toggle.dispatchEvent(new window.Event('change'));
     expect(document.getElementById('screen').style.transform).toMatch(/^matrix3d\(/);
     expect(document.getElementById('tvFrame').classList.contains('framed')).toBe(true);
+    expect(document.getElementById('crtOverlay').style.clipPath).toMatch(/^polygon\(/);
   });
 
-  it('disabling frame mode clears the transform', async () => {
+  it('disabling frame mode clears the transform and the CRT overlay mask', async () => {
     await loadApp();
     const toggle = document.getElementById('frameEnabled');
     toggle.checked = true;
@@ -1040,6 +1041,7 @@ describe('TV frame', () => {
     toggle.dispatchEvent(new window.Event('change'));
     expect(document.getElementById('screen').style.transform).toBe('');
     expect(document.getElementById('tvFrame').classList.contains('framed')).toBe(false);
+    expect(document.getElementById('crtOverlay').style.clipPath).toBe('');
   });
 
   it('a window resize re-applies the transform while frame mode is on', async () => {

@@ -156,7 +156,14 @@ body.shake {
 
 /* CRT overlay: scanlines + vignette, opacity-scaled by --crt-intensity
    (set by app.js from the slider). Sits above everything else so it reads
-   as a screen effect, not part of the scene. */
+   as a screen effect, not part of the scene - which is also why it lives
+   in index.html as a sibling of #screen rather than inside it: #screen
+   gets warped by a matrix3d transform in TV-frame mode, and a `position:
+   fixed` descendant of a transformed element is positioned/painted
+   relative to *that* element instead of the real viewport. Nesting this
+   inside #screen used to drag its vh/vmax-sized scanlines and vignette
+   through the same perspective warp, crushing them into a moire mess
+   instead of a flat effect over the whole page. */
 #crtOverlay {
   position: fixed;
   inset: 0;
