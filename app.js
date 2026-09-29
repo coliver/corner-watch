@@ -985,11 +985,12 @@ const HUD_IDLE_MS = 3000;
 const HUD_WAKE_MS = 1100;
 let hudIdleTimer = null;
 let hudWakeTimer = null;
+let hudHovered = false;
 
 function armHudIdleTimer() {
   clearTimeout(hudIdleTimer);
   hudIdleTimer = setTimeout(() => {
-    document.body.classList.add('idle');
+    if (!hudHovered) document.body.classList.add('idle');
   }, HUD_IDLE_MS);
 }
 
@@ -1006,6 +1007,20 @@ function onHudMouseMove() {
 }
 window.addEventListener('mousemove', onHudMouseMove);
 armHudIdleTimer();
+
+// The mouse sitting still over the settings button/panel shouldn't count as
+// "no activity" - without this, the HUD can fade out from under the pointer
+// mid-interaction (e.g. while reading a section before flipping a switch).
+const hudControls = document.getElementById('controls');
+hudControls.addEventListener('mouseenter', () => {
+  hudHovered = true;
+  clearTimeout(hudIdleTimer);
+  document.body.classList.remove('idle');
+});
+hudControls.addEventListener('mouseleave', () => {
+  hudHovered = false;
+  armHudIdleTimer();
+});
 
 // Test-only: set the bouncer's position/velocity directly, so a test can
 // engineer an exact wall/corner hit instead of waiting for `tick` to drift

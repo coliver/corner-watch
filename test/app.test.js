@@ -1112,6 +1112,37 @@ describe('HUD idle fade', () => {
     vi.advanceTimersByTime(app.HUD_WAKE_MS);
     expect(document.body.classList.contains('idle')).toBe(false);
   });
+
+  it('does not go idle while the mouse is sitting over the settings HUD', async () => {
+    const app = await loadApp();
+    document.getElementById('controls').dispatchEvent(new window.Event('mouseenter'));
+
+    vi.advanceTimersByTime(app.HUD_IDLE_MS * 3);
+    expect(document.body.classList.contains('idle')).toBe(false);
+  });
+
+  it('resumes the idle countdown once the mouse leaves the settings HUD', async () => {
+    const app = await loadApp();
+    const controls = document.getElementById('controls');
+    controls.dispatchEvent(new window.Event('mouseenter'));
+    vi.advanceTimersByTime(app.HUD_IDLE_MS);
+    expect(document.body.classList.contains('idle')).toBe(false);
+
+    controls.dispatchEvent(new window.Event('mouseleave'));
+    vi.advanceTimersByTime(app.HUD_IDLE_MS - 1);
+    expect(document.body.classList.contains('idle')).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(document.body.classList.contains('idle')).toBe(true);
+  });
+
+  it('hovering the HUD while already idle wakes it immediately, without waiting for HUD_WAKE_MS', async () => {
+    const app = await loadApp();
+    vi.advanceTimersByTime(app.HUD_IDLE_MS);
+    expect(document.body.classList.contains('idle')).toBe(true);
+
+    document.getElementById('controls').dispatchEvent(new window.Event('mouseenter'));
+    expect(document.body.classList.contains('idle')).toBe(false);
+  });
 });
 
 describe('TV frame', () => {
