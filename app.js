@@ -29,9 +29,11 @@ const tvPhotoWrap = document.getElementById('tvPhotoWrap');
 const soundEnabledInput = document.getElementById('soundEnabled');
 const countdownEnabledInput = document.getElementById('countdownEnabled');
 const crtEnabledInput = document.getElementById('crtEnabled');
+const crtAdvanced = document.getElementById('crtAdvanced');
 const crtIntensityInput = document.getElementById('crtIntensity');
 const crtIntensityValue = document.getElementById('crtIntensityVal');
 const trailEnabledInput = document.getElementById('trailEnabled');
+const trailAdvanced = document.getElementById('trailAdvanced');
 const trailStyleInput = document.getElementById('trailStyle');
 const trailSpeedInput = document.getElementById('trailSpeed');
 const trailSpeedValue = document.getElementById('trailSpeedVal');
@@ -233,6 +235,7 @@ function updateRangeFill(input) {
 
 function syncTrailUI() {
   trailEnabledInput.checked = trailConfig.enabled;
+  trailAdvanced.hidden = !trailConfig.enabled;
   trailStyleInput.value = trailConfig.style;
   trailSpeedInput.value = trailConfig.speed;
   trailSpeedValue.textContent = trailConfig.speed + 'px';
@@ -327,6 +330,7 @@ function applyCrtEffect() {
 }
 
 crtEnabledInput.checked = crtConfig.enabled;
+crtAdvanced.hidden = !crtConfig.enabled;
 crtIntensityInput.value = crtConfig.intensity;
 crtIntensityValue.textContent = crtConfig.intensity + '%';
 updateRangeFill(crtIntensityInput);
@@ -334,6 +338,7 @@ applyCrtEffect();
 
 crtEnabledInput.addEventListener('change', () => {
   crtConfig.enabled = crtEnabledInput.checked;
+  crtAdvanced.hidden = !crtConfig.enabled;
   applyCrtEffect();
   saveCrtConfig();
 });
@@ -453,6 +458,7 @@ function applySpeed(newSpeed) {
 
 trailEnabledInput.addEventListener('change', () => {
   trailConfig.enabled = trailEnabledInput.checked;
+  trailAdvanced.hidden = !trailConfig.enabled;
   if (!trailConfig.enabled) {
     trailPoints = [];
     trailContext.clearRect(0, 0, trail.width, trail.height);
@@ -636,6 +642,7 @@ function resetToDefaults() {
 
   Object.assign(crtConfig, DEFAULT_CRT_CONFIG);
   crtEnabledInput.checked = crtConfig.enabled;
+  crtAdvanced.hidden = !crtConfig.enabled;
   crtIntensityInput.value = crtConfig.intensity;
   crtIntensityValue.textContent = crtConfig.intensity + '%';
   updateRangeFill(crtIntensityInput);

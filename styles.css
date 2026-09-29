@@ -295,7 +295,7 @@ body.idle #controls {
 
 #trailControls {
   margin-top: 6px;
-  width: 220px;
+  width: 260px;
   color: #e4e4e8;
   background: rgba(12, 12, 15, 0.88);
   border: 1px solid var(--accent);
@@ -324,7 +324,16 @@ body.idle #controls {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #c8c8ce;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+/* A short plain-language line under each section's label, so what a toggle
+   or slider actually does doesn't have to be inferred from its name alone. */
+.sectionHint {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #8b8b93;
 }
 
 .paletteRow {
@@ -420,6 +429,7 @@ body.idle #controls {
   gap: 8px;
   cursor: pointer;
   font-size: 12px;
+  min-height: 26px;
 }
 #trailControls label + label {
   margin-top: 9px;
@@ -443,10 +453,11 @@ body.idle #controls {
 }
 
 /* checkbox restyled as a small hardware-style toggle: a hollow square that
-   fills solid with the live accent color when on. */
+   fills solid with the live accent color when on. Sized well past the
+   16x16 native default so it's an easy target to hit, not just to see. */
 #trailControls input[type="checkbox"] {
-  width: 15px;
-  height: 15px;
+  width: 22px;
+  height: 22px;
   margin: 0;
   flex-shrink: 0;
   border: 1px solid #8b8b93;
@@ -496,15 +507,15 @@ body.idle #controls {
 #trailControls input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 8px;
-  height: 14px;
+  width: 12px;
+  height: 20px;
   background: var(--accent);
   border-radius: 0;
   cursor: pointer;
 }
 #trailControls input[type="range"]::-moz-range-thumb {
-  width: 8px;
-  height: 14px;
+  width: 12px;
+  height: 20px;
   border: none;
   background: var(--accent);
   border-radius: 0;

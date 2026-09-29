@@ -30,7 +30,13 @@
   <input id="fileInput" type="file" accept="image/*">
   <div id="trailControls" hidden>
     <div class="panelSection">
+      <div class="sectionLabel">Nostalgia mode</div>
+      <p class="sectionHint">A Sony Trinitron, seat belt strapped to an AV cart &mdash; just like in school</p>
+      <label class="switchRow"><span>Enabled</span><input type="checkbox" id="frameEnabled"></label>
+    </div>
+    <div class="panelSection">
       <div class="sectionLabel">Colors</div>
+      <p class="sectionHint">The color the bouncing logo cycles through</p>
       <div class="paletteRow">
         <button type="button" id="paletteButton" aria-haspopup="listbox" aria-expanded="false" aria-label="Color palette">
           <span class="swatchStrip" id="paletteButtonSwatch"></span>
@@ -41,6 +47,7 @@
     </div>
     <div class="panelSection">
       <div class="sectionLabel">Background</div>
+      <p class="sectionHint">What shows behind the logo</p>
       <label class="trailRow"><span>Screen</span>
         <select id="backgroundColor">
           <option value="classic">Classic</option>
@@ -58,6 +65,7 @@
     </div>
     <div class="panelSection">
       <div class="sectionLabel">Photo</div>
+      <p class="sectionHint">Bounce your own picture instead of the logo</p>
       <div id="photoRow">
         <button id="pickBtn" type="button">Choose photo…</button>
         <button id="clearBtn" type="button" hidden>Clear photo</button>
@@ -65,51 +73,55 @@
     </div>
     <div class="panelSection">
       <div class="sectionLabel">Sound</div>
+      <p class="sectionHint">A soft blip on every wall bounce</p>
       <label class="switchRow"><span>Sound enabled</span><input type="checkbox" id="soundEnabled"></label>
     </div>
     <div class="panelSection">
       <div class="sectionLabel">Countdown</div>
+      <p class="sectionHint">Shows how long until the next corner hit</p>
       <label class="switchRow"><span>Show countdown</span><input type="checkbox" id="countdownEnabled"></label>
     </div>
     <div class="panelSection">
       <div class="sectionLabel">CRT effect</div>
+      <p class="sectionHint">Retro scanlines and glow</p>
       <label class="switchRow"><span>Enabled</span><input type="checkbox" id="crtEnabled"></label>
-      <label class="trailRow"><span>Intensity</span>
-        <input type="range" id="crtIntensity" min="0" max="100" step="5">
-        <span class="trailVal" id="crtIntensityVal"></span>
-      </label>
-    </div>
-    <div class="panelSection">
-      <div class="sectionLabel">TV frame</div>
-      <label class="switchRow"><span>Enabled</span><input type="checkbox" id="frameEnabled"></label>
+      <div id="crtAdvanced" hidden>
+        <label class="trailRow"><span>Intensity</span>
+          <input type="range" id="crtIntensity" min="0" max="100" step="5">
+          <span class="trailVal" id="crtIntensityVal"></span>
+        </label>
+      </div>
     </div>
     <div class="panelSection">
       <div class="sectionLabel">Trail effect</div>
+      <p class="sectionHint">A fading trail behind the bouncing logo</p>
       <label class="switchRow"><span>Enabled</span><input type="checkbox" id="trailEnabled"></label>
-      <label class="trailRow"><span>Style</span>
-        <select id="trailStyle">
-          <option value="dots">Dots</option>
-          <option value="comet">Comet</option>
-          <option value="line">Line</option>
-          <option value="rainbow">Rainbow</option>
-        </select>
-      </label>
-      <label class="trailRow"><span>Speed</span>
-        <input type="range" id="trailSpeed" min="1" max="40" step="1">
-        <span class="trailVal" id="trailSpeedVal"></span>
-      </label>
-      <label class="trailRow"><span>Size</span>
-        <input type="range" id="trailSize" min="50" max="200" step="10">
-        <span class="trailVal" id="trailSizeVal"></span>
-      </label>
-      <label class="trailRow"><span>Fade</span>
-        <input type="range" id="trailFade" min="5" max="120" step="5">
-        <span class="trailVal" id="trailFadeVal"></span>
-      </label>
-      <label class="trailRow"><span>Opacity</span>
-        <input type="range" id="trailOpacity" min="5" max="100" step="5">
-        <span class="trailVal" id="trailOpacityVal"></span>
-      </label>
+      <div id="trailAdvanced" hidden>
+        <label class="trailRow"><span>Style</span>
+          <select id="trailStyle">
+            <option value="dots">Dots</option>
+            <option value="comet">Comet</option>
+            <option value="line">Line</option>
+            <option value="rainbow">Rainbow</option>
+          </select>
+        </label>
+        <label class="trailRow"><span>Speed</span>
+          <input type="range" id="trailSpeed" min="1" max="40" step="1">
+          <span class="trailVal" id="trailSpeedVal"></span>
+        </label>
+        <label class="trailRow"><span>Size</span>
+          <input type="range" id="trailSize" min="50" max="200" step="10">
+          <span class="trailVal" id="trailSizeVal"></span>
+        </label>
+        <label class="trailRow"><span>Fade</span>
+          <input type="range" id="trailFade" min="5" max="120" step="5">
+          <span class="trailVal" id="trailFadeVal"></span>
+        </label>
+        <label class="trailRow"><span>Opacity</span>
+          <input type="range" id="trailOpacity" min="5" max="100" step="5">
+          <span class="trailVal" id="trailOpacityVal"></span>
+        </label>
+      </div>
     </div>
     <div class="panelSection">
       <button type="button" id="resetDefaultsBtn">Reset to defaults</button>
