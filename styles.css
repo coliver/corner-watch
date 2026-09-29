@@ -307,7 +307,7 @@ body.idle #controls {
 }
 
 .panelSection {
-  padding: 8px 0;
+  padding: 10px 0;
 }
 .panelSection:first-child {
   padding-top: 0;
@@ -320,9 +320,11 @@ body.idle #controls {
 }
 .sectionLabel {
   font-size: 11px;
-  letter-spacing: 0.02em;
-  color: #8b8b93;
-  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c8c8ce;
+  margin-bottom: 8px;
 }
 
 .paletteRow {
@@ -420,7 +422,7 @@ body.idle #controls {
   font-size: 12px;
 }
 #trailControls label + label {
-  margin-top: 6px;
+  margin-top: 9px;
 }
 .switchRow {
   justify-content: space-between;
@@ -443,8 +445,8 @@ body.idle #controls {
 /* checkbox restyled as a small hardware-style toggle: a hollow square that
    fills solid with the live accent color when on. */
 #trailControls input[type="checkbox"] {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   margin: 0;
   flex-shrink: 0;
   border: 1px solid #8b8b93;
