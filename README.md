@@ -13,7 +13,7 @@
 A DVD-logo screensaver for the browser. A logo (or your own photo) bounces
 around the screen, changes color on every wall hit, and celebrates with
 confetti, a flash, a screen shake, and a fanfare if it ever nails the exact
-corner.
+corner. Props to my son for the idea.
 
 | Plain view | TV-frame view (corner hit) |
 | --- | --- |
